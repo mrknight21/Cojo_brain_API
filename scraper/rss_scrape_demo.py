@@ -37,7 +37,7 @@ def save_news_csv(path,news):
 
 
 
-
+##using the built() function from the newspaper lib to scrape all news from a given homepage. It is powerful, but the result is not very stable, so will not use it that often.
 def download_newsite(url):
     newsp = newspaper.build(url)
     print("number of articles: ", len(newsp.articles))
@@ -47,6 +47,7 @@ def download_newsite(url):
         news.append(new)
     return news
 
+##use the python feedparser to get basic informations
 def download_rss(url):
     feed = feedparser.parse(url)
     feed_title = feed['feed']['title']
@@ -54,7 +55,12 @@ def download_rss(url):
     print("number of articles: ", len(feed_entries))
     news = []
     for entry in feed.entries:
-        new = get_content(entry.link)
+        new={}
+        new["description"] = entry.description
+        new["title"] = entry.title
+        new["link"] = entry.link
+        new["pubdate"] = entry.published
+        new = {**new, **get_content(entry.link)}
         print(entry.title)
         news.append(new)
     return news
@@ -85,23 +91,15 @@ def download_rss(url):
 
 
 
-
+##use newspaper package's Article object to dig into the contents, and do further analysis and tagging
 def get_content(url):
     new = {}
     article = Article(url)
     article.download()
     article.parse()
     article.nlp()
-    print(article.title)
-    new['title'] = article.title
-    ##https://stackoverflow.com/questions/10624937/convert-datetime-object-to-a-string-of-date-only-in-python
-    new['pubdate'] = article.publish_date
-    ##new['author'] =article.authors
-    new['link'] = article.url
-    ##For training convenience I will scrape the content in here, but in production, content will be used to extracting features but will not be stored in database.
-    ##new['content'] = article.text
+    content = article.text
     new['kw'] = article.keywords
-    new['sum'] = article.summary
     return new
 
 
@@ -114,8 +112,6 @@ def main():
     collection = download_rss("http://rss.nzherald.co.nz/rss/xml/nzhtsrsscid_000000698.xml")
     print(len(collection))
     save_news_json("heral_news_dump.json", collection)
-
-
 
 
 

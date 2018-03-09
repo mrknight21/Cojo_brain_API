@@ -1,0 +1,22 @@
+After download the code from Github, you should cd to the project folder (/Cojo), then create your virtual environment
+
+ it can be down by:
+ \Cojo> python -m venv venv
+
+ then activate your local virtual environment, by:
+ \Cojo> venv\Scripts\activate
+
+ You will see the(venv) at your command line, which signal you are currently in your local vitual environment.
+
+ Then update the require packages by entering:
+ (venv) C:....\Cojo> pip install -r requirements.txt
+
+ If you have download any new packages, you should type:
+ pip freeze > requirements.txt
+ It will update the requirements.txt
+ Then push the updated version to github
+
+ database:
+ server: cojo-sqldb
+ Server admin login:cojonews
+ password: Cojo2103
