@@ -109,7 +109,7 @@ def get_content(url):
 def main():
     #collection = download_news("https://www.stuff.co.nz/")
     #save_news_csv(collection, "scraper/news_dump.csv")
-    collection = download_rss("http://rss.nzherald.co.nz/rss/xml/nzhtsrsscid_000000698.xml")
+    collection = download_rss("http://rss.nzherald.co")
     print(len(collection))
     save_news_json("heral_news_dump.json", collection)
 
