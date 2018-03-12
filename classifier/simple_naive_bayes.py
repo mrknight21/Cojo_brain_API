@@ -6,6 +6,12 @@ from nltk.tokenize import word_tokenize
 from os import listdir
 
 class SimpleBayesian:
+    """
+    Usage:
+    document = some string
+    a = SimpleBayesian()
+    a.predict(document)
+    """
     def __init__(self, model_path='simpleNaiveBaysian.pickle'):
         f = open(model_path, 'rb')
         self.classifier, self.word_features = pickle.load(f)
