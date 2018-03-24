@@ -25,11 +25,25 @@ class MultinomialBayesian:
         # Initialize lemmatizer
         self.wordnet_lemmatizer = WordNetLemmatizer()
 
+        self.category_reference = {
+            1: 'business',
+            2: 'entertainment',
+            3: 'politics',
+            4: 'sport',
+            5: 'tech'
+        }
+
         f = open('multinomialNaiveBaysian.pickle', 'rb')
         self.model = pickle.load(f)
         f.close()
 
-    def tokenize(self, document, rebuild_document=True):
+    def tokenize(self, document):
+        """
+        Converts document string into tokens to be passed into the classifier
+        :param document: raw string of text
+        :param rebuild_document:
+        :return: a list of tokens (string objects)
+        """
         words = []
 
         for sentence in sent_tokenize(document):
@@ -37,12 +51,14 @@ class MultinomialBayesian:
                       for t in self.regexp_tokenizer.tokenize(sentence) if t.lower() not in self.stop_words]
             words += tokens
 
-        if rebuild_document:
-            return ' '.join(words).strip()
-        else:
-            return words
+        return words
 
     def get_prediction(self, in_text):
+        """
+        Given some input text, returns prediction made by classifier
+        :param in_text: a string, the raw text of the document to be classified
+        :return: a string of one of the 5 BBC categories: business, entertainment, politics, sport or tech.
+        """
         in_tokens = self.tokenize(in_text)
         prediction = self.category_reference[self.model.predict(in_tokens)[0]]
         return prediction
