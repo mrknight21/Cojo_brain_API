@@ -1,12 +1,6 @@
-from flask import Flask
+from app import app, db
 
-app = Flask(__name__)
-
-
-@app.route('/')
-def hello_world():
-    return 'Hello World!'
-
-
-if __name__ == '__main__':
-    app.run()
+print(app.config['SECRET_KEY'])
+##@app.shell_context_processor
+##def make_shell_context():
+    ##return {'db': db, 'User': User, 'Post': Post}
