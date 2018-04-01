@@ -18,7 +18,7 @@ firekey = {
 }
 
 
-db_url = "https://sustained-flux-162207.firebaseio.com/"
+db_url = "https://cojo-74668.firebaseio.com/"
 
 class db_connect:
 
