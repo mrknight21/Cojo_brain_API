@@ -106,9 +106,9 @@ class Scraper:
         article = Article(url)
         article.download()
         article.parse()
-        article.nlp()
+        ##article.nlp()
         content = article.text
-        new['kw'] = article.keywords
+        ##new['kw'] = article.keywords
         return new
 
 
