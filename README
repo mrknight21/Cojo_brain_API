@@ -16,7 +16,3 @@ After download the code from Github, you should cd to the project folder (/Cojo)
  It will update the requirements.txt
  Then push the updated version to github
 
- database:
- server: cojo-sqldb
- Server admin login:cojonews
- password: Cojo2103
