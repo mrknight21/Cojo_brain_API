@@ -4,7 +4,7 @@ from firebase_admin import db
 
 
 
-
+firekey = "your token"
 
 
 db_url = "https://cojo-74668.firebaseio.com/"
