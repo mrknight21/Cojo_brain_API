@@ -1,11 +1,8 @@
 from newspaper import Article
-import newspaper
 import json
-import csv
 import datetime
 import feedparser
 import re
-from db_management.config import db_connect
 from firebase_admin import db
 import csv
 
