@@ -7,7 +7,9 @@ import nltk
 from nltk.corpus import wordnet
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
-from nltk.stem.porter import PorterStemmer, SnowballStemmer
+from nltk.stem.porter import PorterStemmer
+from nltk.stem.snowball import SnowballStemmer
+import string
 
 
 def clean_text(text):
@@ -300,3 +302,9 @@ def addCapTag(word):
     else:
         return word
 
+def main():
+    pass
+
+
+if __name__ == "__main__":
+    main()
