@@ -1,3 +1,5 @@
 models/*
 trainer/data/*
 .idea/*
+.flaskenv
+cojo.env
