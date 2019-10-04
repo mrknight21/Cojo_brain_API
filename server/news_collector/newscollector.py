@@ -19,8 +19,8 @@ class NewsCollector(object):
         self.get_content = get_content
         self.mongo_db = mongo_db
         self.analyzer = analyzer
-        self.hasher = eval('hashlib.'+Config.NEWS_ID_HASH)
-        self.salt = Config.HASH_SECRET_SALT
+        # self.hasher = eval('hashlib.'+Config.NEWS_ID_HASH)
+        # self.salt = Config.HASH_SECRET_SALT
 
     def collect_news(self, mode='general', params = None):
 
@@ -47,8 +47,14 @@ class NewsCollector(object):
 
 
     @staticmethod
-    def generate_id(self, news):
-        pass
+    def generate_id(new):
+        title = new['title']
+        created = new['publishedAt']
+        salt = 'bryanhandsome'
+        concat_str = title+str(created)+str(salt)
+        hashed_id = hashlib.sha224(concat_str.encode('utf-8')).digest()
+        return hashed_id
+
 
     def mongo_news_dump(self, news):
         pass
@@ -61,7 +67,8 @@ def tester():
     news = collector.collect_news()
     if news:
         print(len(news))
-        print(news[0])
+        ids = list(map( lambda  x: NewsCollector.generate_id(x), news))
+        print(ids)
 
 
 if __name__ == "__main__":
