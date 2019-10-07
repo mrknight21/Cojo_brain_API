@@ -8,6 +8,7 @@ import hashlib
 
 class NewsCollector(object):
 
+
     def __init__(self, mongo_db, news_api_key = None, get_content = False, max_load = 2000, analyzer = None, *argv, **kwas):
         if news_api_key:
             self.news_api = NewsApiClient(api_key=news_api_key)
@@ -19,8 +20,23 @@ class NewsCollector(object):
         self.get_content = get_content
         self.mongo_db = mongo_db
         self.analyzer = analyzer
+        if 'sources' not in kwas:
+            self.sources =self.get_local_source_str()
         # self.hasher = eval('hashlib.'+Config.NEWS_ID_HASH)
         # self.salt = Config.HASH_SECRET_SALT
+
+    def get_local_source_str(self, country = 'us'):
+        sources_ids = []
+        src_str = ""
+        source_info = self.news_api.get_sources(country=country)
+        if source_info['status'] == 'ok':
+            for source in source_info['sources']:
+                id = source.get('id', None)
+                if id:
+                    sources_ids.append(id)
+        if sources_ids:
+            src_str = ','.join(sources_ids)
+        return src_str
 
     def collect_news(self, mode='general', params = None):
 
@@ -57,18 +73,21 @@ class NewsCollector(object):
 
 
     def mongo_news_dump(self, news):
-        pass
+        mongo_conn = Mongo_conn(['news_store'])
+        collector = NewsCollector(mongo_conn)
+        news = collector.collect_news()
 
 
 
 def tester():
     mongo_conn = Mongo_conn(['news_store'])
     collector  = NewsCollector(mongo_conn)
-    news = collector.collect_news()
-    if news:
-        print(len(news))
-        ids = list(map( lambda  x: NewsCollector.generate_id(x), news))
-        print(ids)
+    print(collector.sources)
+    # news = collector.collect_news()
+    # if news:
+    #     print(len(news))
+    #     ids = list(map( lambda  x: NewsCollector.generate_id(x), news))
+    #     print(ids)
 
 
 if __name__ == "__main__":
