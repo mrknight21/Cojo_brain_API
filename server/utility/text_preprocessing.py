@@ -1,16 +1,10 @@
 """ Copyright 2017, Dimitrios Effrosynidis, All rights reserved. """
 
 import re
-from functools import partial
-from collections import Counter
-import nltk
 from nltk.corpus import wordnet
 from nltk.corpus import stopwords
-from nltk.stem import WordNetLemmatizer
-from nltk.stem.porter import PorterStemmer
 from nltk.stem.snowball import SnowballStemmer
 import string
-
 
 def clean_text(text):
     ## Remove puncuation
@@ -136,26 +130,26 @@ def countAllCaps(text):
     return len(re.findall("[A-Z0-9]{3,}", text))
 
 
-""" Creates a dictionary with slangs and their equivalents and replaces them """
-with open('slang.txt') as file:
-    slang_map = dict(map(str.strip, line.partition('\t')[::2])
-                     for line in file if line.strip())
-
-slang_words = sorted(slang_map, key=len, reverse=True)  # longest first for regex
-regex = re.compile(r"\b({})\b".format("|".join(map(re.escape, slang_words))))
-replaceSlang = partial(regex.sub, lambda m: slang_map[m.group(1)])
-
-
-def countSlang(text):
-    """ Input: a text, Output: how many slang words and a list of found slangs """
-    slangCounter = 0
-    slangsFound = []
-    tokens = nltk.word_tokenize(text)
-    for word in tokens:
-        if word in slang_words:
-            slangsFound.append(word)
-            slangCounter += 1
-    return slangCounter, slangsFound
+# """ Creates a dictionary with slangs and their equivalents and replaces them """
+# with open('slang.txt') as file:
+#     slang_map = dict(map(str.strip, line.partition('\t')[::2])
+#                      for line in file if line.strip())
+#
+# slang_words = sorted(slang_map, key=len, reverse=True)  # longest first for regex
+# regex = re.compile(r"\b({})\b".format("|".join(map(re.escape, slang_words))))
+# replaceSlang = partial(regex.sub, lambda m: slang_map[m.group(1)])
+#
+#
+# def countSlang(text):
+#     """ Input: a text, Output: how many slang words and a list of found slangs """
+#     slangCounter = 0
+#     slangsFound = []
+#     tokens = nltk.word_tokenize(text)
+#     for word in tokens:
+#         if word in slang_words:
+#             slangsFound.append(word)
+#             slangCounter += 1
+#     return slangCounter, slangsFound
 
 
 """ Replaces contractions from a string to their equivalents """
@@ -200,57 +194,6 @@ def countEmoticons(text):
     return len(re.findall(
         ':\)|;\)|:-\)|\(-:|:-D|=D|:P|xD|X-p|\^\^|:-*|\^\.\^|\^\-\^|\^\_\^|\,-\)|\)-:|:\'\(|:\(|:-\(|:\S|T\.T|\.\_\.|:<|:-\S|:-<|\*\-\*|:O|=O|=\-O|O\.o|XO|O\_O|:-\@|=/|:/|X\-\(|>\.<|>=\(|D:',
         text))
-
-
-### Spell Correction begin ###
-""" Spell Correction http://norvig.com/spell-correct.html """
-
-
-def words(text): return re.findall(r'\w+', text.lower())
-
-
-WORDS = Counter(words(open('corporaForSpellCorrection.txt').read()))
-
-
-def P(word, N=sum(WORDS.values())):
-    """P robability of `word`. """
-    return WORDS[word] / N
-
-
-def spellCorrection(word):
-    """ Most probable spelling correction for word. """
-    return max(candidates(word), key=P)
-
-
-def candidates(word):
-    """ Generate possible spelling corrections for word. """
-    return (known([word]) or known(edits1(word)) or known(edits2(word)) or [word])
-
-
-def known(words):
-    """ The subset of `words` that appear in the dictionary of WORDS. """
-    return set(w for w in words if w in WORDS)
-
-
-def edits1(word):
-    """ All edits that are one edit away from `word`. """
-    letters = 'abcdefghijklmnopqrstuvwxyz'
-    splits = [(word[:i], word[i:]) for i in range(len(word) + 1)]
-    deletes = [L + R[1:] for L, R in splits if R]
-    transposes = [L + R[1] + R[0] + R[2:] for L, R in splits if len(R) > 1]
-    replaces = [L + c + R[1:] for L, R in splits if R for c in letters]
-    inserts = [L + c + R for L, R in splits for c in letters]
-    return set(deletes + transposes + replaces + inserts)
-
-
-def edits2(word):
-    """ All edits that are two edits away from `word`. """
-    return (e2 for e1 in edits1(word) for e2 in edits1(e1))
-
-
-### Spell Correction End ###
-
-### Replace Negations Begin ###
 
 def replace(word, pos=None):
     """ Creates a set of all antonyms for the word and if there is only one antonym, it returns it """
@@ -302,9 +245,30 @@ def addCapTag(word):
     else:
         return word
 
-def main():
-    pass
-
+def test():
+    text = "Offering an article's reading time estimation to your site's content, can contribute greatly to your end users." \
+           "  First of all, it allows end users to prepare the time they needs to read an article in full. Secondly," \
+           " it could help them choose the right article for the right amount of available time they have." \
+           " Lastly, it opens a whole new range of features, sorting options and filter improvements you can offer (like" \
+           " filtering articles by reading time). From http://www.assafelovic.com/blog/2017/6/27/estimating-an-articles-reading-time @BryanChen"
+    addCapTag(text)
+    addNotTag(text)
+    replaceNegations(text)
+    countEmoticons(text)
+    removeEmoticons(text)
+    removeUnicode(text)
+    replaceURL(text)
+    replaceAtUser(text)
+    removeHashtagInFrontOfWord(text)
+    removeNumbers(text)
+    replaceMultiExclamationMark(text)
+    replaceMultiQuestionMark(text)
+    replaceMultiStopMark(text)
+    countMultiExclamationMarks(text)
+    countMultiQuestionMarks(text)
+    countMultiStopMarks(text)
+    text = clean_text(text)
+    print(text)
 
 if __name__ == "__main__":
-    main()
+    test()
