@@ -5,6 +5,7 @@ from config import Config
 from database.mongo_db_util import Mongo_conn
 from newsapi import NewsApiClient
 import hashlib
+import datetime
 
 class NewsCollector(object):
 
@@ -20,6 +21,7 @@ class NewsCollector(object):
         self.get_content = get_content
         self.mongo_db = mongo_db
         self.analyzer = analyzer
+        self.now = datetime.datetime.now()
         if 'sources' not in kwas:
             self.sources =self.get_local_source_str()
         # self.hasher = eval('hashlib.'+Config.NEWS_ID_HASH)
@@ -38,19 +40,18 @@ class NewsCollector(object):
             src_str = ','.join(sources_ids)
         return src_str
 
-    def collect_news(self, mode='general', params = None):
+    def collect_news(self, mode='headlines', params = None):
 
         news = []
+        page = 1
         if mode == 'headlines':
         # /v2/top-headlines
         # for api params, see: https://newsapi.org/docs/endpoints/top-headlines
-            collection = self.news_api.get_top_headlines(q='Deep Learning', language='en', country='us')
+            collection = self.news_api.get_top_headlines(language='en', country='nz', page_size=100, )
         if mode == 'general':
         # # /v2/everything
         # for api params, see: https://newsapi.org/docs/endpoints/sources
             collection = self.news_api.get_everything(q='Deep Learning',
-                                                  from_param='2019-10-01',
-                                                  to='2019-10-03',
                                                   language='en',
                                                   sort_by='relevancy',
                                                   page=1)
