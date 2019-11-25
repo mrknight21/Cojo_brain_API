@@ -4,30 +4,56 @@ import os
 from config import Config
 from database.mongo_db_util import Mongo_conn
 from newsapi import NewsApiClient
+from analyzer_api.simple_analyzer import SimpleAnalyzer
+from news_collector.news import News
 import hashlib
 import datetime
 
 class NewsCollector(object):
 
-
-    def __init__(self, mongo_db, news_api_key = None, get_content = False, max_load = 2000, analyzer = None, *argv, **kwas):
+    def __init__(self, mongo_db, news_api_key = None, max_load = 2000, analyzers = [], save = False, *argv, **kwas):
         if news_api_key:
             self.news_api = NewsApiClient(api_key=news_api_key)
         elif Config.NEWS_API_KEY:
             self.news_api = NewsApiClient(api_key=Config.NEWS_API_KEY)
         else:
             raise Exception('No API KEY')
+        self.save = save
         self.max_load = max_load
-        self.get_content = get_content
         self.mongo_db = mongo_db
-        self.analyzer = analyzer
-        self.now = datetime.datetime.now()
+        self.analyzers = analyzers
+        self.now = datetime.datetime.utcnow()
         if 'sources' not in kwas:
-            self.sources =self.get_local_source_str()
+            self.sources =self.get_country_source_str()
         # self.hasher = eval('hashlib.'+Config.NEWS_ID_HASH)
         # self.salt = Config.HASH_SECRET_SALT
 
-    def get_local_source_str(self, country = 'us'):
+    def collect_news(self, mode='headlines', params = None):
+        processed_news_count = 0
+        total_news_count = 0
+        cur_page = 1
+        total = 0
+        download_time = self.now
+        bacth_collection = self.get_batch_news_api_call(mode = mode, page=cur_page)
+        status = False
+        if bacth_collection['status'] == 'ok':
+            status = True
+            total_news_count = bacth_collection['totalResults']
+        else:
+            raise Exception('Abnormal response from API. code: {}'.format(bacth_collection['status']))
+
+        while(status and processed_news_count < total_news_count):
+            if cur_page > 1:
+                bacth_collection = self.get_batch_news_api_call(mode = mode, page=cur_page)
+                download_time = datetime.datetime.utcnow()
+            batch_news =  bacth_collection['articles']
+            parsed_news_data, flag = self.batch_process_news(batch_news, download_time = download_time)
+            if flag and self.save:
+                self.mongo_news_dump(parsed_news_data)
+            processed_news_count += len(batch_news)
+            cur_page += 1
+
+    def get_country_source_str(self, country = 'us'):
         sources_ids = []
         src_str = ""
         source_info = self.news_api.get_sources(country=country)
@@ -40,50 +66,64 @@ class NewsCollector(object):
             src_str = ','.join(sources_ids)
         return src_str
 
-    def collect_news(self, mode='headlines', params = None):
-
-        news = []
-        page = 1
+    def get_batch_news_api_call(self, mode = "headlines", page= 1):
+        collection = {}
         if mode == 'headlines':
-        # /v2/top-headlines
-        # for api params, see: https://newsapi.org/docs/endpoints/top-headlines
-            collection = self.news_api.get_top_headlines(language='en', country='nz', page_size=100, )
+            # /v2/top-headlines
+            # for api params, see: https://newsapi.org/docs/endpoints/top-headlines
+            collection = self.news_api.get_top_headlines(sources=self.sources, page_size=100, page=page)
         if mode == 'general':
-        # # /v2/everything
-        # for api params, see: https://newsapi.org/docs/endpoints/sources
-            collection = self.news_api.get_everything(q='Deep Learning',
-                                                  language='en',
-                                                  sort_by='relevancy',
-                                                  page=1)
-        if collection['status'] == 'ok':
-            print('Number of articles collected: {}'.format(collection['totalResults']))
-            return collection['articles']
-        else:
-            print ('Collection status'.format(collection['status']))
-            return None
+            # # /v2/everything
+            # for api params, see: https://newsapi.org/docs/endpoints/sources
+            collection = self.news_api.get_everything(sources=self.sources, sort_by='relevancy', page=page)
+        return collection
 
 
-    @staticmethod
-    def generate_id(new):
-        title = new['title']
-        created = new['publishedAt']
-        salt = 'bryanhandsome'
-        concat_str = title+str(created)+str(salt)
-        hashed_id = hashlib.sha224(concat_str.encode('utf-8')).digest()
-        return hashed_id
+    def batch_process_news(self, batch_raw_content, download_time = None, thread = 5):
+        batch_container = []
+        flag = True
+        if not download_time:
+            download_time = datetime.datetime.utcnow()
+        for news_info in batch_raw_content:
+            try:
+                news = News(news_info, news_info['url'], download_time)
+                content = news.get_article_full_text()
+                news.tags = self.tag_news(content)
+                news.to_dic()
+                # json_obj = news.out_put_json()
+                batch_container.append(news.info_dic)
+                print("Scraped and processed article: {}".format(news.title) )
+            except Exception as e:
+                print("Failed scraping article: {}".format(news.title))
+                print("due to :{}".format(e))
+                continue
+        return batch_container, flag
 
+    def tag_news(self, content):
+        tags = {}
+        for analyzer in self.analyzers:
+            tags.update(analyzer.single_analyze(content))
+        return tags
 
-    def mongo_news_dump(self, news):
-        mongo_conn = Mongo_conn(['news_store'])
-        collector = NewsCollector(mongo_conn)
-        news = collector.collect_news()
+    def mongo_news_dump(self, news_data):
+        flag = False
+        try:
+            self.mongo_db.bulk_insert('News_pool', news_data)
+            flag = True
+        except Exception as e:
+            print(e)
+        if flag:
+            print("Successfully uploaded {} of news into mongodb".format(len(news_data)))
+
 
 
 
 def tester():
-    mongo_conn = Mongo_conn(['news_store'])
-    collector  = NewsCollector(mongo_conn)
+    mongo_conn = Mongo_conn()
+    simple_analyzer = SimpleAnalyzer()
+    collector  = NewsCollector(mongo_conn, analyzers=[simple_analyzer], save = True)
     print(collector.sources)
+    collector.collect_news()
     # news = collector.collect_news()
     # if news:
     #     print(len(news))
