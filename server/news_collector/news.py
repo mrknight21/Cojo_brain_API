@@ -98,13 +98,14 @@ class News(object):
             self.get_article_obj()
         return self.article_obj.text
 
-    def generate_news_id(self, raw_info):
+    def generate_news_id(self, raw_info, digits = 12):
         title = raw_info['title']
         url = raw_info['url']
         # salt = 'bryanhandsome'
         concat_str = title + str(url)
-        hashed_id = hashlib.sha224(concat_str.encode('utf-8')).digest()
-        return str(hashed_id)
+        hashed_id = hashlib.sha224(concat_str.encode('utf-8')).hexdigest()
+        id_str = hashed_id[:digits]
+        return
 
 
     def fill_object_with_news_please(self):

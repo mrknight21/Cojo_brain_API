@@ -1,25 +1,33 @@
 import pymongo
 from config import Config
-import sys, os
 
 class Mongo_conn(object):
-    default_connection_string = Config.MONGO_DATABASE_URL
+    CONNECTION_STRING = Config.MONGO_DATABASE_URL
+    COJODATABASE = 'news_store'
 
-    def __init__(self, db_names, connection_string = None):
+    def __init__(self, db_name = None, connection_string = None):
         if connection_string:
             self.client = pymongo.MongoClient(connection_string)
         else:
-            self.client = pymongo.MongoClient(Mongo_conn.default_connection_string)
-        self.databases = {}
-        for db in db_names:
-            self.databases[db] = self.client[db]
+            self.client = pymongo.MongoClient(Mongo_conn.CONNECTION_STRING)
+        if db_name:
+            self.db_name = db_name
+            self.db_conn = self.client[db_name]
+        else:
+            self.db_name = Mongo_conn.COJODATABASE
+            self.db_conn = self.client[Mongo_conn.COJODATABASE]
 
+    def insert(self, db, collection, data):
+        self.db_conn[collection].insert(data)
 
-    def insert(self, db,collection, data):
-        return self.databases[db][collection].insert(data)
+    def bulk_insert(self, collection, data_list):
+        self.db_conn[collection].insert_many(data_list)
 
-    def find_one(self, db, collection, query):
-        return self.databases[db][collection].find_one(query)
+    def find_one(self,  collection, query):
+        return self.db_conn[collection].find_one(query)
+
+    def check_existence(self, collection, query):
+        pass
 
 def mongo_db_test():
 
