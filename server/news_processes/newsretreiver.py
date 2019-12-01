@@ -4,8 +4,8 @@ import datetime
 from news_processes.news import News
 
 
-class NewsCollector(object):
-    
+class NewsRetreiver(object):
+
 
     def __init__(self, mongo_db, news_api_key = None, max_load = 2000, analyzers = [], save = False, *argv, **kwas):
         self.max_load = max_load

@@ -5,11 +5,13 @@ from config import Config
 from database.mongo_db_util import Mongo_conn
 from newsapi import NewsApiClient
 from analyzer_api.simple_analyzer import SimpleAnalyzer
-from news_collector.news import News
+from news_processes.news import News
 import hashlib
 import datetime
 
 class NewsCollector(object):
+
+    CATEGORY = ['business', 'entertainment', 'general', 'health', 'science', 'sports' ,'technology']
 
     def __init__(self, mongo_db, news_api_key = None, max_load = 2000, analyzers = [], save = False, *argv, **kwas):
         if news_api_key:
