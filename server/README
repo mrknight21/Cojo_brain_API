@@ -1,6 +1,8 @@
+First download python 3.6+ from https://www.python.org/downloads/
+
 After download the code from Github, you should cd to the project folder (/Cojo), then create your virtual environment
 
- it can be down by:
+ it can be done by:
  \Cojo> python -m venv venv
 
  then activate your local virtual environment, by:
