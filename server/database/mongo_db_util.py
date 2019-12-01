@@ -23,8 +23,11 @@ class Mongo_conn(object):
     def bulk_insert(self, collection, data_list):
         self.db_conn[collection].insert_many(data_list)
 
-    def find_one(self,  collection, query):
-        return self.db_conn[collection].find_one(query)
+    def find_one(self, query, collection = None):
+        if collection:
+            return self.db_conn[collection].find_one(query)
+        if not collection:
+            return self.db_conn[Mongo_conn.COJODATABASE].find_one(query)
 
     def check_existence(self, collection, query):
         pass
