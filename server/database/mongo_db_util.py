@@ -26,8 +26,8 @@ class Mongo_conn(object):
     def find_one(self, collection, query):
         return self.db_conn[collection].find_one(query)
 
-    def check_existence(self, collection, query):
-        pass
+    def find_many(self, collection, query, limit = 500):
+        return self.db_conn[collection].find(query).limit(limit)
 
 def mongo_db_test():
 

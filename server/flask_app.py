@@ -10,17 +10,18 @@ from config import Config
 import os, sys
 from users import  *
 from news_processes.newsretreiver import NewsRetreiver
+from database.mongo_db_util import Mongo_conn
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(basedir)
 
 app = Flask(__name__)
 app.config.from_object(Config)
+mongo_db = Mongo_conn()
 # swagger = Swagger(app)
 
 
-@app.route('/asknews', methods=["POST"])
-def get_newsfeed():
+
 # Argument for request.form:
 # user_id : string
 # time: 2019-11-30T16:14:00Z
@@ -36,8 +37,10 @@ def get_newsfeed():
 # 3. If no cache_news or if news expire: create news cache, and set page_id to 1
 # 4. If valid news cache retreived, then retreive news base on news id
 # 5. return news after postprocessing
-
+@app.route('/asknews', methods=["POST"])
+def get_newsfeed():
     is_member = False
+    is_loggin = False
     if request.method == 'POST':
         if 'user_id' in request.form and request.form['user_id']:
             user_id = request.form['user_id']
