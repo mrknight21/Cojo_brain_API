@@ -39,6 +39,8 @@ class News(object):
         self.source = self.raw_info['source']
         self.author = self.raw_info['author']
         self.title = self.raw_info['title']
+        self.lang = None
+        self.domain = None
         self.description = self.raw_info['description']
         self.image_url = self.raw_info['urlToImage']
         if use_newsapi:
@@ -74,6 +76,8 @@ class News(object):
             'news_id': self.news_id,
             'country': self.country,
             'source': self.source,
+            'source_domain': self.domain,
+            'language': self.lang,
             'author': self.author,
             'title': self.title,
             'description': self.description,
@@ -97,6 +101,9 @@ class News(object):
 
     def get_article_obj(self):
         self.article_obj = NewsPlease.from_url(self.url)
+        if self.article_obj:
+            self.lang = self.article_obj['language']
+            self.domain = self.article_obj['source_domain']
 
     def get_article_full_text(self):
         if not self.article_obj:
@@ -110,7 +117,7 @@ class News(object):
         concat_str = title + str(url)
         hashed_id = hashlib.sha224(concat_str.encode('utf-8')).hexdigest()
         id_str = hashed_id[:digits]
-        return
+        return id_str
 
 
     def fill_object_with_news_please(self):
