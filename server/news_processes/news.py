@@ -30,11 +30,12 @@ from datetime import datetime
 
 class News(object):
 
-    def __init__(self, raw_info, url, download_time, use_newsapi = True):
+    def __init__(self, raw_info, url, download_time, use_newsapi = True, country = None, category = None):
         self.raw_info = raw_info
         self.news_id = self.generate_news_id(raw_info)
         self.url = url
         self.info_dic = None
+        self.country = country
         self.source = self.raw_info['source']
         self.author = self.raw_info['author']
         self.title = self.raw_info['title']
@@ -48,7 +49,10 @@ class News(object):
         self.tags = {}
         self.bags = {}
         self.short_content = self.raw_info['content']
-        self.main_category = "general"
+        if not category:
+            self.main_category = "general"
+        else:
+            self.main_category = category
         self.categories = []
         self.article_obj = None
 
@@ -68,6 +72,7 @@ class News(object):
     def to_dic(self):
         self.info_dic = {
             'news_id': self.news_id,
+            'country': self.country,
             'source': self.source,
             'author': self.author,
             'title': self.title,
