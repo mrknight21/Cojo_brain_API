@@ -1,6 +1,7 @@
 from users.user import User
 from datetime import datetime, timedelta
 from database.mongo_db_util import Mongo_conn
+import hashlib, random, string
 
 
 class Member(User):
@@ -16,17 +17,26 @@ class Member(User):
         else:
             self.cur_time = datetime.utcnow()
 
-
     def authenticate_user(self):
         return True
 
     def check_loggin(self, user_id, auth_token):
         return True
 
-    def retreive_from_cache(self, page_id):
+    def generate_new_auth_token(self, digits = 12):
+        now_str = datetime.utcnow().strftime("%m/%d/%YT%H:%M:%S")
+        concat_str = self.user_id + now_str + random.choice(string.ascii_letters)+ random.choice(string.ascii_letters)
+        hashed_id = hashlib.sha224(concat_str.encode('utf-8')).hexdigest()
+        id_str = hashed_id[:digits]
+        return id_str
+
+
+
+    def retreive_news_ids_from_cache(self, page_id):
         pass
 
     def create_news_cache(self):
+        self.auth_token = self.generate_new_auth_token()
         cache = {'created': datetime.utcnow(), 'auth_token':self.auth_token, 'ranked_page':{}}
         query = self.prepare_news_query()
         all_news = self.mongo_db.find_many('News_pool', query)
@@ -69,5 +79,5 @@ class Member(User):
 if __name__ == "__main__":
     mongo_db = Mongo_conn()
     m = Member(mongo_db, 1, 1)
-    news = m.retreive_and_rank_news()
+    news = m.create_news_cache()
     print(list(news))
