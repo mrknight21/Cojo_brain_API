@@ -102,8 +102,8 @@ class News(object):
     def get_article_obj(self):
         self.article_obj = NewsPlease.from_url(self.url)
         if self.article_obj:
-            self.lang = self.article_obj['language']
-            self.domain = self.article_obj['source_domain']
+            self.lang = self.article_obj.language
+            self.domain = self.article_obj.source_domain
 
     def get_article_full_text(self):
         if not self.article_obj:
