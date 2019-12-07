@@ -2,6 +2,8 @@ from users.user import User
 from datetime import datetime, timedelta
 from database.mongo_db_util import Mongo_conn
 import hashlib, random, string
+from users.user_utility import *
+from bson.objectid import ObjectId
 
 
 class Member(User):
@@ -18,7 +20,11 @@ class Member(User):
             self.cur_time = datetime.utcnow()
 
     def authenticate_user(self):
-        return True
+        prsence = False
+        user = quick_check_user_account(self.user_id, self.mongo_db)
+        if user:
+            presense = True
+        return presense
 
     def check_loggin(self, user_id, auth_token):
         return True
@@ -30,19 +36,21 @@ class Member(User):
         id_str = hashed_id[:digits]
         return id_str
 
-
-
-    def retreive_news_ids_from_cache(self, page_id):
-        pass
+    # def retreive_news_ids_from_cache(self, page_id):
 
     def create_news_cache(self):
         self.auth_token = self.generate_new_auth_token()
-        cache = {'created': datetime.utcnow(), 'auth_token':self.auth_token, 'ranked_page':{}}
+        cache = {'user_id': ObjectId(self.user_id), 'created': datetime.utcnow(), 'auth_token':self.auth_token, 'ranked_page':{}}
+        cur_page = []
+        update_query = {'user_id':ObjectId(self.user_id)}
         query = self.prepare_news_query()
         all_news = self.mongo_db.find_many('News_pool', query)
         ranked_news = self.rank_and_page(all_news)
-        cache['ranked_page'] = ranked_news
-        return cache
+        if ranked_news:
+            cache['ranked_page'] = ranked_news
+            self.mongo_db.update_one('Users_caches', update_query, cache, upsert=True)
+            cur_page = ranked_news['1']
+        return 1, cur_page
 
     def prepare_news_query(self, days = 3):
         end = datetime.utcnow()
@@ -70,14 +78,12 @@ class Member(User):
                 interaction = {'read': False}
                 single_news = {'_id': n_id , 'interaction': interaction}
                 page_list.append(single_news)
-            ranked_news_in_page[page_id] =page_list
+            if page_list:
+                ranked_news_in_page[str(page_id)] =page_list
         return ranked_news_in_page
-
-
-
 
 if __name__ == "__main__":
     mongo_db = Mongo_conn()
-    m = Member(mongo_db, 1, 1)
-    news = m.create_news_cache()
-    print(list(news))
+    m = Member(mongo_db, '5dcf83cc89d63e295d03da12', 1)
+    page_id, news_cache = m.create_news_cache()
+    print(news_cache)
