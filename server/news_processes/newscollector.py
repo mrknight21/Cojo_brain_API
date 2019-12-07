@@ -130,7 +130,7 @@ class NewsCollector(object):
 
 
 def tester():
-    countries = ['us', 'nz', 'uk']
+    countries = ['us', 'nz']
     mongo_conn = Mongo_conn()
     simple_analyzer = SimpleAnalyzer()
     collector  = NewsCollector(mongo_conn, analyzers=[simple_analyzer], save = True, country = 'us')
