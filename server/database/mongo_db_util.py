@@ -29,6 +29,14 @@ class Mongo_conn(object):
     def find_many(self, collection, query, limit = 500):
         return self.db_conn[collection].find(query).limit(limit)
 
+    def delete_one(self, collection, query):
+        self.db_conn[collection].delete_one(query)
+
+    def update_one(self, collection,query, content, upsert = False):
+        update_content = {'$set': content}
+        self.db_conn[collection].update(query, update_content, upsert = upsert)
+
+
 def mongo_db_test():
 
     print(Config.NEWS_API_KEY)
