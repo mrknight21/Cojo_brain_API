@@ -5,7 +5,6 @@ import hashlib, random, string
 from users.user_utility import *
 from bson.objectid import ObjectId
 
-
 class Member(User):
 
     def __init__(self, mongo_db, user_id, auth_token, time = None, location = None, page_id = 1):
@@ -28,6 +27,13 @@ class Member(User):
 
     def check_loggin(self, user_id, auth_token):
         return True
+
+    def retreive_from_cache(self, user_id, page_id):
+        pass
+        # try:
+        #     if self.auth and self.has_loggin:
+        #         query = {'_'}
+        #         self.mongo_db
 
     def generate_new_auth_token(self, digits = 12):
         now_str = datetime.utcnow().strftime("%m/%d/%YT%H:%M:%S")
