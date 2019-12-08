@@ -26,8 +26,11 @@ class Mongo_conn(object):
     def find_one(self, collection, query):
         return self.db_conn[collection].find_one(query)
 
-    def find_many(self, collection, query, limit = 500):
-        return self.db_conn[collection].find(query).limit(limit)
+    def find_many(self, collection, query, limit = None):
+        if limit:
+            return self.db_conn[collection].find(query).limit(limit)
+        else:
+            return self.db_conn[collection].find(query)
 
     def delete_one(self, collection, query):
         self.db_conn[collection].delete_one(query)
