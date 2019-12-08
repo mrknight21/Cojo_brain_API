@@ -1,4 +1,4 @@
-from user import User
+from users.user import User
 
 class Guest(User):
 
