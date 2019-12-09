@@ -6,6 +6,8 @@ from users.user_utility import *
 from bson.objectid import ObjectId
 
 class Member(User):
+    # Unit is hours
+    EXPIRED_DURATION = 2
 
     def __init__(self, mongo_db, user_id, auth_token, time = None, location = None, page_id = 1):
         self.mongo_db = mongo_db
@@ -26,14 +28,31 @@ class Member(User):
         return presense
 
     def check_loggin(self, user_id, auth_token):
+        if  self.auth:
+            return True
+        else:
+            return False
+
+    def validate_expiration(self, cache, duration = 3):
+        # Disable time validation for testing purpose
+        # if cache['created']  < datetime.utcnow()- timedelta(hours=duration):
+        #     return  False
+        # else:
+        #     return  True
         return True
 
-    def retreive_from_cache(self, user_id, page_id):
-        pass
-        # try:
-        #     if self.auth and self.has_loggin:
-        #         query = {'_'}
-        #         self.mongo_db
+
+    def retreive_from_cache(self, page_id):
+        try:
+            if self.auth and self.has_loggin:
+                query = {'_id': ObjectId(self.user_id), 'auth_token': self.auth_token}
+                user_cache = self.mongo_db.find_one('Users_caches', query)
+                if user_cache and self.validate_expiration(user_cache, duration=  timedelta(hours=Member.EXPIRED_DURATION)):
+                    page_cache = user_cache['ranked_page'][str(page_id)]
+                    return  page_cache
+            return []
+        except Exception:
+            return []
 
     def generate_new_auth_token(self, digits = 12):
         now_str = datetime.utcnow().strftime("%m/%d/%YT%H:%M:%S")
@@ -87,6 +106,9 @@ class Member(User):
             if page_list:
                 ranked_news_in_page[str(page_id)] =page_list
         return ranked_news_in_page
+
+    def return_non_loggin_info(self):
+        return "Guest mode still under development"
 
 if __name__ == "__main__":
     mongo_db = Mongo_conn()
