@@ -1,4 +1,4 @@
-from guest import  Guest
-from member import Member
+from users.guest import  Guest
+from users.member import Member
 
 __all__ = ['Guest', 'Member']

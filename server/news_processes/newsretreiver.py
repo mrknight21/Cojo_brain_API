@@ -6,13 +6,13 @@ from bson.objectid import ObjectId
 
 class NewsRetreiver(object):
 
-    def __init__(self, mongo_db, news_api_key = None, max_load = 2000, analyzers = [], save = False, *argv, **kwas):
+    def __init__(self, mongo_db, max_load = 2000, *argv, **kwas):
         self.max_load = max_load
         self.mongo_db = mongo_db
         self.now = datetime.datetime.utcnow()
 
-    def construct_page_json(self, page_cache):
-        json_ranked_news = None
+    def construct_news_page(self, page_cache):
+        ranked_news = None
         page, news_ids = self.parsing_single_page_cache(page_cache)
         news_lst = self.retreive_news(news_ids)
         if news_lst:
@@ -28,8 +28,7 @@ class NewsRetreiver(object):
                 if not self.validate_news_obj(page[id]):
                     del page[id]
             ranked_news = sorted(page.values(), key = lambda x: x['rank'])
-            json_ranked_news = json.dumps(ranked_news)
-        return json_ranked_news
+        return ranked_news
 
     def retreive_news(self, news_ids):
         assert isinstance(news_ids[0], ObjectId)

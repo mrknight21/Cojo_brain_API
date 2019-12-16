@@ -17,7 +17,7 @@ class Mongo_conn(object):
             self.db_name = Mongo_conn.COJODATABASE
             self.db_conn = self.client[Mongo_conn.COJODATABASE]
 
-    def insert(self, db, collection, data):
+    def insert(self, collection, data):
         self.db_conn[collection].insert(data)
 
     def bulk_insert(self, collection, data_list):
@@ -35,16 +35,19 @@ class Mongo_conn(object):
     def delete_one(self, collection, query):
         self.db_conn[collection].delete_one(query)
 
-    def update_one(self, collection,query, content, upsert = False):
+    def update_one(self, collection, query, content, upsert = False):
         update_content = {'$set': content}
-        self.db_conn[collection].update(query, update_content, upsert = upsert)
+        self.db_conn[collection].update_one(query, update_content, upsert = upsert)
 
+    def update_many(self, collection, query, content, upsert = False):
+        update_content = {'$set': content}
+        self.db_conn[collection].update_many(query, update_content, upsert=upsert)
 
 def mongo_db_test():
 
     print(Config.NEWS_API_KEY)
     print(Config.MONGO_DATABASE_URL)
-    mongo_conn = Mongo_conn(['news_store', 'sample_airbnb'])
+    mongo_conn = Mongo_conn()
     info = mongo_conn.find_one('sample_airbnb', 'listingsAndReviews', {"_id": '10006546'})
     print(info)
 
