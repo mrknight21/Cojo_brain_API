@@ -4,7 +4,8 @@
 """
 
 import pickle
-from flask import Flask, request
+from flask import Flask, request, Response
+from flask_cors import CORS
 from config import Config
 # from flasgger import Swagger
 import os, sys, json
@@ -18,6 +19,7 @@ sys.path.append(basedir)
 
 app = Flask(__name__)
 app.config.from_object(Config)
+CORS(app)
 mongo_db = Mongo_conn()
 # swagger = Swagger(app)
 
@@ -76,15 +78,17 @@ def update_newscache():
             resp['news'] = news
         resp['auth_token'] = cur_user.auth_token
         resp['total_page'] = total_page
-        return json.dumps(resp)
     else:
         resp['message'] = "Please loggin or register"
-        return json.dumps(resp)
+
+    flaskResponse = Response(resp)
+    flaskResponse.headers["Content-Type"] = "application/json"
+    return flaskResponse
 
 @app.route('/asknews', methods=["POST"])
 def get_newsfeed():
     user_name = request.form.get('user_name', 'default')
-    user_id = request.form.get('user_id', 'guest')
+    user_id = request.form.get('user_id', '0'*24)
     auth_token = request.form.get('auth_token', None)
     cur_time = request.form.get('time', None)
     cur_page = request.form.get('cur_page', 1)
@@ -106,13 +110,13 @@ def get_newsfeed():
                 resp['news'] = news
             resp['auth_token'] = cur_user.auth_token
             resp['total_page'] = total_page
-            return json.dumps(resp)
         else:
             resp['message'] = "No news available, please wait for freshly collected news."
-            return json.dumps(resp)
     else:
         resp['message'] = "Please loggin or register"
-        return json.dumps(resp)
+    flaskResponse = Response(resp)
+    flaskResponse.headers["Content-Type"] = "application/json"
+    return flaskResponse
 
 if __name__ == '__main__':
     print(Config.NEWS_API_KEY)
