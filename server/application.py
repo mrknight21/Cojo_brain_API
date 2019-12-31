@@ -80,10 +80,7 @@ def update_newscache():
         resp['total_page'] = total_page
     else:
         resp['message'] = "Please loggin or register"
-
-    flaskResponse = Response(resp)
-    flaskResponse.headers["Content-Type"] = "application/json"
-    return flaskResponse
+    return json.dumps(resp)
 
 @app.route('/asknews', methods=["POST"])
 def get_newsfeed():
@@ -114,10 +111,8 @@ def get_newsfeed():
             resp['message'] = "No news available, please wait for freshly collected news."
     else:
         resp['message'] = "Please loggin or register"
-    flaskResponse = Response(resp)
-    flaskResponse.headers["Content-Type"] = "application/json"
-    return flaskResponse
+    return json.dumps(resp)
 
 if __name__ == '__main__':
     print(Config.NEWS_API_KEY)
-    app.run(host='localhost', port=8080)
+    app.run(host='0.0.0.0')
