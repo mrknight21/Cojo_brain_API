@@ -62,6 +62,14 @@ mongo_db = Mongo_conn()
 def test_connection():
     return 'testing connection: {}'.format(Config.SECRET_KEY)
 
+@app.route('/mongotest', methods=["POST"])
+def mongo_test_connection():
+    user_name = request.form.get('user_name', 'default')
+    user_id = request.form.get('user_id', 'guest')
+    auth_token = request.form.get('auth_token', None)
+    user_status = determine_user_status(user_name, user_id, auth_token, mongo_db)
+    return "This visitor is {}".format(user_status)
+
 @app.route('/updatenews', methods=["POST"])
 def update_newscache():
     user_name = request.form.get('user_name', 'default')
