@@ -60,7 +60,7 @@ mongo_db = Mongo_conn()
 
 @app.route('/', methods=["GET"])
 def test_connection():
-    return 'testing connection: good!'
+    return 'testing connection: {}'.format(Config.SECRET_KEY)
 
 @app.route('/updatenews', methods=["POST"])
 def update_newscache():
