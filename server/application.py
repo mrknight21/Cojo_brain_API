@@ -58,6 +58,10 @@ mongo_db = Mongo_conn()
 # A: if the provided auth token exists in a non-deleted page cache.
 #
 
+@app.route('/', methods=["GET"])
+def test_connection():
+    return 'testing connection: good!'
+
 @app.route('/updatenews', methods=["POST"])
 def update_newscache():
     user_name = request.form.get('user_name', 'default')
