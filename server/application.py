@@ -62,7 +62,7 @@ mongo_db = Mongo_conn()
 def test_connection():
     return 'testing connection: {}'.format(Config.SECRET_KEY)
 
-@app.route('/mongotest', methods=["POST"])
+@app.route('/mongotest', methods=['GET', 'POST'])
 def mongo_test_connection():
     user_name = request.form.get('user_name', 'default')
     user_id = request.form.get('user_id', 'guest')
