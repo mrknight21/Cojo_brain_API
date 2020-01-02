@@ -60,7 +60,7 @@ mongo_db = Mongo_conn()
 
 @app.route('/', methods=["GET"])
 def test_connection():
-    return 'testing connection: {}'.format(Config.SECRET_KEY)
+    return 'testing connection: {}'.format(Config.MONGO_DATABASE_URL)
 
 @app.route('/mongotest', methods=['GET', 'POST'])
 def mongo_test_connection():
