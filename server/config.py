@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 
 basedir = os.path.abspath(os.path.dirname(__file__))
-env_path = '\cojo.env'
+env_path = '/cojo.env'
 load_dotenv(dotenv_path=basedir+env_path)
 
 
