@@ -8,6 +8,7 @@ news-please==1.4.24
 newsapi-python==0.2.5
 nltk==3.4.5
 numpy==1.17.2
+dnspython
 pandas==0.25.1
 pathlib==1.0.1
 pymongo==3.9.0
