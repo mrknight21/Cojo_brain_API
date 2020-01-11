@@ -12,6 +12,7 @@ class Config(object):
     NEWS_API_KEY = os.environ.get('NEWS_API_KEY')
     NEWS_ID_HASH = os.environ.get('NEWS_ID_HASH')
     HASH_SECRET_SALT = os.environ.get('HASH_SECRET_SALT')
+    PORT = os.environ.get('PORT')
 
 
 
