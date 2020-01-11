@@ -127,4 +127,4 @@ def get_newsfeed():
 
 if __name__ == '__main__':
     print(Config.NEWS_API_KEY)
-    app.run(host='0.0.0.0', port=80)
+    app.run(host='0.0.0.0', port=8080)
