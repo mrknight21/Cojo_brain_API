@@ -1,28 +1,3 @@
-'''
-Schema for news json store in mongo db, refer to OpenAPI document
-
-news_obj = {
-        'source': {'id': None, 'name': None},
-        'author':None,
-        'title': None,
-        'description': None,
-        'url': None,
-        'urlToImage': None,
-        'publishedAt': None,
-        'tag':
-                {'polarity': float,
-                 'subjectivity': float,
-                 ......}
-        'bag':{
-            'who':[{'word': str, 'polarity': float, 'type': str}]
-            'where': [{'word': str, 'polarity': float, 'geolocation': ??}]
-            'when'[]
-            ''
-        }
-        'categories': [str list],
-    }
-'''
-
 from newsplease import NewsPlease
 import json
 import hashlib
@@ -73,7 +48,6 @@ class News(object):
 
     def to_dic(self):
         self.info_dic = {
-            'news_id': self.news_id,
             'country': self.country,
             'source': self.source,
             'source_domain': self.domain,
@@ -110,7 +84,7 @@ class News(object):
             self.get_article_obj()
         return self.article_obj.text
 
-    def generate_news_id(self, raw_info, digits = 12):
+    def generate_news_id(self, raw_info, digits = 18):
         title = raw_info['title']
         url = raw_info['url']
         # salt = 'bryanhandsome'

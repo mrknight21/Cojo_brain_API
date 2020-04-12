@@ -6,29 +6,29 @@ from bson.objectid import ObjectId
 
 class NewsRetreiver(object):
 
-    def __init__(self, mongo_db, max_load = 2000, *argv, **kwas):
+    def __init__(self, db, max_load = 2000, *argv, **kwas):
         self.max_load = max_load
-        self.mongo_db = mongo_db
+        self.db = db
         self.now = datetime.datetime.utcnow()
 
-    def construct_news_page(self, page_cache):
-        ranked_news = None
-        page, news_ids = self.parsing_single_page_cache(page_cache)
-        news_lst = self.retreive_news(news_ids)
-        if news_lst:
-            for news_obj in news_lst:
-                try:
-                    id = news_obj['_id']
-                    page[id].update(news_obj)
-                    page[id]['_id'] = str(page[id]['_id'])
-                    page[id]['publishedAt'] = self.time_parser(page[id]['publishedAt'])
-                    page[id]['downloadedAt'] = self.time_parser(page[id]['downloadedAt'])
-                except Exception:
-                    pass
-                if not self.validate_news_obj(page[id]):
-                    del page[id]
-            ranked_news = sorted(page.values(), key = lambda x: x['rank'])
-        return ranked_news
+    # def construct_news_page(self, page_cache):
+    #     ranked_news = None
+    #     page, news_ids = self.parsing_single_page_cache(page_cache)
+    #     news_lst = self.retreive_news(news_ids)
+    #     if news_lst:
+    #         for news_obj in news_lst:
+    #             try:
+    #                 id = news_obj['_id']
+    #                 page[id].update(news_obj)
+    #                 page[id]['_id'] = str(page[id]['_id'])
+    #                 page[id]['publishedAt'] = self.time_parser(page[id]['publishedAt'])
+    #                 page[id]['downloadedAt'] = self.time_parser(page[id]['downloadedAt'])
+    #             except Exception:
+    #                 pass
+    #             if not self.validate_news_obj(page[id]):
+    #                 del page[id]
+    #         ranked_news = sorted(page.values(), key = lambda x: x['rank'])
+    #     return ranked_news
 
     def retreive_news(self, news_ids):
         assert isinstance(news_ids[0], ObjectId)

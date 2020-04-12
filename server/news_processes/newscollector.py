@@ -2,9 +2,10 @@ import json
 import datetime
 import os
 from config import Config
-from database.mongo_db_util import Mongo_conn
+# from database.mongo_db_util import Mongo_conn
+from database.firebase_db_util import Firebase_conn
 from newsapi import NewsApiClient
-from analyzer_api.simple_analyzer import SimpleAnalyzer
+from analyzers.simple_analyzer import SimpleAnalyzer
 from news_processes.news import News
 import hashlib
 import datetime
@@ -13,7 +14,7 @@ class NewsCollector(object):
 
     CATEGORY = ['business', 'entertainment', 'general', 'health', 'science', 'sports' ,'technology']
 
-    def __init__(self, mongo_db, news_api_key = None, max_load = 2000, analyzers = [], save = False, country = None,*argv, **kwas):
+    def __init__(self, db_conn, news_api_key = None, max_load = 2000, analyzers = [], save = False, country = None,*argv, **kwas):
         if news_api_key:
             self.news_api = NewsApiClient(api_key=news_api_key)
         elif Config.NEWS_API_KEY:
@@ -23,7 +24,7 @@ class NewsCollector(object):
         self.save = save
         self.country = country
         self.max_load = max_load
-        self.mongo_db = mongo_db
+        self.db_conn = db_conn
         self.analyzers = analyzers
         self.now = datetime.datetime.utcnow()
         if 'sources' not in kwas:
@@ -50,7 +51,7 @@ class NewsCollector(object):
             batch_news =  bacth_collection['articles']
             parsed_news_data, flag = self.batch_process_news(batch_news, download_time = download_time, country = country, category = category)
             if flag and self.save:
-                self.mongo_news_dump(parsed_news_data)
+                self.news_dump(parsed_news_data)
             processed_news_count += len(batch_news)
             cur_page += 1
 
@@ -101,8 +102,8 @@ class NewsCollector(object):
                 content = news.get_article_full_text()
                 news.tags = self.tag_news(content)
                 news.to_dic()
-                # json_obj = news.out_put_json()
-                batch_container.append(news.info_dic)
+                # json_obj = news_api.out_put_json()
+                batch_container.append((news.news_id, news.info_dic))
                 print("Scraped and processed article: {}".format(news.title) )
             except Exception as e:
                 print("Failed scraping article: {}".format(news.title))
@@ -116,24 +117,22 @@ class NewsCollector(object):
             tags.update(analyzer.single_analyze(content))
         return tags
 
-    def mongo_news_dump(self, news_data):
+    def news_dump(self, news_data):
         flag = False
         try:
-            self.mongo_db.bulk_insert('News_pool', news_data)
+            self.db_conn.bulk_insert(news_data, 'news_articles', )
             flag = True
         except Exception as e:
             print(e)
         if flag:
-            print("Successfully uploaded {} of news into mongodb".format(len(news_data)))
-
-
+            print("Successfully uploaded {} of news into database".format(len(news_data)))
 
 
 def tester():
     countries = ['us', 'nz']
-    mongo_conn = Mongo_conn()
+    db_conn = Firebase_conn()
     simple_analyzer = SimpleAnalyzer()
-    collector  = NewsCollector(mongo_conn, analyzers=[simple_analyzer], save = True, country = 'us')
+    collector  = NewsCollector(db_conn, analyzers=[simple_analyzer], save = True, country = 'us')
     print(collector.sources)
     for c in countries:
         for cat in collector.CATEGORY:

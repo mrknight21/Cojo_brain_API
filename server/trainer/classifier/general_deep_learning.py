@@ -10,7 +10,7 @@ import pickle
 
 EMBEDDING_FILES = [
     'embedding//glove.840B.300d//glove.840B.300d.txt',
-    'embedding//wiki-news-300d-1M//wiki-news-300d-1M.vec'
+    'embedding//wiki-news_api-300d-1M//wiki-news_api-300d-1M.vec'
 ]
 NUM_MODELS = 2
 BATCH_SIZE = 256

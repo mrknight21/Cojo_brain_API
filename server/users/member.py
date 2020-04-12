@@ -1,21 +1,22 @@
 from users.user import User
 from datetime import datetime, timedelta
 from database.mongo_db_util import Mongo_conn
+from database.firebase_db_util import Firebase_conn, Firestore_order, Firestore_query
 import hashlib, random, string
+from ranker.ranking_util import *
 from users.user_utility import *
-from bson.objectid import ObjectId
 
 class Member(User):
     # Unit is hours
     EXPIRED_DURATION = 2
 
-    def __init__(self, mongo_db, user_name, user_id, auth_token, time = None, location = None, page_id = 1):
-        self.mongo_db = mongo_db
+    def __init__(self, db_conn, user_id, user_name=None, auth_token=None, time = None, location = None, page_id = 1):
+        self.db_conn = db_conn
         self.user_id = user_id
         self.user_name = user_name
-        self.is_member = quick_check_user_account(self.user_name, self.user_id, self.mongo_db)
+        self.is_member = quick_check_user_account(self.user_name, self.user_id, self.db_conn)
         self.auth_token = auth_token
-        self.has_loggin = quick_check_login_status(self.user_id, self.auth_token, self.mongo_db)
+        self.has_loggin = quick_check_login_status(self.user_id, self.auth_token, self.db_conn)
         if time:
             self.cur_time = time
         else:
@@ -32,13 +33,13 @@ class Member(User):
 
     def retreive_from_cache(self, page_id):
         try:
-            if self.is_member and self.has_loggin:
-                query = {'user_id': ObjectId(self.user_id), 'auth_token': self.auth_token, "is_deleted": False}
-                user_cache = self.mongo_db.find_one('Users_caches', query)
-                if user_cache and self.validate_expiration(user_cache, duration=  timedelta(hours=Member.EXPIRED_DURATION)):
-                    total_page = len(user_cache['ranked_page']) -1
-                    page_cache = user_cache['ranked_page'][str(page_id)]
-                    return  page_cache, total_page
+            # if self.is_member and self.has_loggin:
+            #     query = {'user_id': ObjectId(self.user_id), 'auth_token': self.auth_token, "is_deleted": False}
+            #     user_cache = self.mongo_db.find_one('Users_caches', query)
+            #     if user_cache and self.validate_expiration(user_cache, duration=  timedelta(hours=Member.EXPIRED_DURATION)):
+            #         total_page = len(user_cache['ranked_page']) -1
+            #         page_cache = user_cache['ranked_page'][str(page_id)]
+            #         return  page_cache, total_page
             return [], 0
         except Exception:
             return [], 0
@@ -53,36 +54,38 @@ class Member(User):
     # def retreive_news_ids_from_cache(self, page_id):
 
     def create_news_cache(self):
-        self.auth_token = self.generate_new_auth_token()
+        # self.auth_token = self.generate_new_auth_token()
         total_page = 0
-        cache = {'user_id': ObjectId(self.user_id), 'created': datetime.utcnow(), 'auth_token':self.auth_token, 'ranked_page':{}, 'is_deleted':False}
+        cache = {'created': datetime.utcnow(), 'ranked_pages':{}, 'is_deleted':False}
         cur_page = []
-        update_query = {'user_id':ObjectId(self.user_id)}
         query = self.prepare_news_query()
-        all_news = self.mongo_db.find_many('News_pool', query, limit=500)
-        ranked_news = self.rank_and_page(all_news)
+        all_news = self.db_conn.find_many('news_articles', query, limit=40)
+        ranked_news = self.rank_and_page(all_news, insert_article_content=True)
         if ranked_news:
-            cache['ranked_page'] = ranked_news
-            #Soft delete all caches
-            self.mongo_db.update_many('Users_caches', update_query, {"is_deleted": True})
-            self.mongo_db.insert('Users_caches', cache)
+            cache['ranked_pages'] = ranked_news
+            data = {'page_caches' :cache}
+            ref_path = [('document', self.user_id)]
+            self.db_conn.nesting_insert(ref_path, data, collection= 'users', mode= 'update')
             total_page = len(ranked_news)
             cur_page = ranked_news['1']
         return cur_page, total_page
 
     def prepare_news_query(self, days = 3):
+        queries = []
         end = datetime.utcnow()
         start = end - timedelta(days=days)
-        q = {
-            'publishedAt':{'$gte': start, '$lt': end}
-        }
-        return q
+        queries.append(Firestore_query('publishedAt', '>', start))
+        return queries
 
-    def rank_and_page(self, news, news_per_page = 50):
+    def rank_and_page(self, news, news_per_page = 20, insert_article_content = False, variation=5):
         ranked_news_in_page = {}
-        news = sorted(news, key = lambda x: x['publishedAt'])
+        news = [(doc.id, doc.to_dict()) for doc in news]
+        news = sorted(news, key = lambda x: x[1]['publishedAt'])
+        if variation >0:
+            news = introduce_variation(news, variation = variation)
         news_count = len(news)
         number_pages = news_count // news_per_page
+        rank = 0
         for p in range(number_pages):
             page_id = p+1
             page_list = []
@@ -92,9 +95,13 @@ class Member(User):
             start_index = (page_id -1)* news_per_page
             batch_news = news[start_index:end_index]
             for n in batch_news:
-                n_id = n['_id']
+                rank += 1
+                n_id = n[0]
+                content = n[1]
                 interaction = {'read': False}
-                single_news = {'_id': n_id , 'interaction': interaction}
+                single_news = {'news_id': n_id, 'rank': rank,'interaction': interaction}
+                if insert_article_content:
+                    single_news['content'] = content
                 page_list.append(single_news)
             if page_list:
                 ranked_news_in_page[str(page_id)] =page_list
@@ -102,9 +109,3 @@ class Member(User):
 
     def return_non_loggin_info(self):
         return "Guest mode still under development"
-
-if __name__ == "__main__":
-    mongo_db = Mongo_conn()
-    m = Member(mongo_db, 'default','5dcf83cc89d63e295d03da12', 'dcf6e762150a')
-    # page_id, news_cache = m.create_news_cache()
-    print(m.user_name)
