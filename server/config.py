@@ -14,7 +14,3 @@ class Config(object):
     NEWS_ID_HASH = os.environ.get('NEWS_ID_HASH')
     HASH_SECRET_SALT = os.environ.get('HASH_SECRET_SALT')
     PORT = os.environ.get('PORT')
-
-# if __name__ == "__main__":
-#     firebase_path = os.path.join(basedir,'credentials',Config.FIREBASE_CRED_PATH)
-#     print(firebase_path)
