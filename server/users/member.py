@@ -17,6 +17,11 @@ class Member(User):
         self.is_member = quick_check_user_account(self.user_name, self.user_id, self.db_conn)
         self.auth_token = auth_token
         self.has_loggin = quick_check_login_status(self.user_id, self.auth_token, self.db_conn)
+        self.firestore_obj = None
+        try:
+            self.firestore_obj = self.db_conn.find_one(doc_id=self.user_id, collection='users')._data
+        except Exception as e:
+            self.firestore_obj = None
         if time:
             self.cur_time = time
         else:
@@ -55,20 +60,17 @@ class Member(User):
 
     def create_news_cache(self):
         # self.auth_token = self.generate_new_auth_token()
-        total_page = 0
-        cache = {'created': datetime.utcnow(), 'ranked_pages':{}, 'is_deleted':False}
-        cur_page = []
         query = self.prepare_news_query()
         all_news = self.db_conn.find_many('news_articles', query, limit=40)
-        ranked_news = self.rank_and_page(all_news, insert_article_content=True)
-        if ranked_news:
-            cache['ranked_pages'] = ranked_news
-            data = {'page_caches' :cache}
-            ref_path = [('document', self.user_id)]
-            self.db_conn.nesting_insert(ref_path, data, collection= 'users', mode= 'update')
-            total_page = len(ranked_news)
-            cur_page = ranked_news['1']
-        return cur_page, total_page
+        ranked_news = self.simple_rank(all_news, insert_article_content=True)
+        return ranked_news
+
+    def update_news_cache(self, ranked_news):
+        cache = {'created': datetime.utcnow(), 'ranked_pages': {}, 'is_deleted': False}
+        if self.firestore_obj and ranked_news:
+            cache['news'] = ranked_news
+            self.firestore_obj['news_caches'] = cache
+            self.db_conn.insert(data = self.firestore_obj, collection = 'users', doc_id = self.user_id)
 
     def prepare_news_query(self, days = 3):
         queries = []
@@ -77,35 +79,22 @@ class Member(User):
         queries.append(Firestore_query('publishedAt', '>', start))
         return queries
 
-    def rank_and_page(self, news, news_per_page = 20, insert_article_content = False, variation=5):
-        ranked_news_in_page = {}
+    def simple_rank(self, news, news_per_page = 20, insert_article_content = False, variation=5):
+        ranked_news = []
         news = [(doc.id, doc.to_dict()) for doc in news]
         news = sorted(news, key = lambda x: x[1]['publishedAt'])
         if variation >0:
             news = introduce_variation(news, variation = variation)
-        news_count = len(news)
-        number_pages = news_count // news_per_page
         rank = 0
-        for p in range(number_pages):
-            page_id = p+1
-            page_list = []
-            end_index = news_per_page * page_id
-            if end_index > news_count:
-                end_index = news_count
-            start_index = (page_id -1)* news_per_page
-            batch_news = news[start_index:end_index]
-            for n in batch_news:
-                rank += 1
-                n_id = n[0]
-                content = n[1]
-                interaction = {'read': False}
-                single_news = {'news_id': n_id, 'rank': rank,'interaction': interaction}
-                if insert_article_content:
-                    single_news['content'] = content
-                page_list.append(single_news)
-            if page_list:
-                ranked_news_in_page[str(page_id)] =page_list
-        return ranked_news_in_page
+        for n in news:
+            rank += 1
+            n_id = n[0]
+            content = n[1]
+            single_news = {'news_id': n_id, 'rank': rank}
+            if insert_article_content:
+                single_news['content'] = content
+            ranked_news.append(single_news)
+        return ranked_news
 
     def return_non_loggin_info(self):
         return "Guest mode still under development"

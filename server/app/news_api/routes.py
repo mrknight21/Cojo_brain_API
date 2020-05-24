@@ -9,10 +9,6 @@ from news_processes.newsretreiver import NewsRetreiver
 from app.news_api import bp, frb_bd as db_conn
 
 
-# @bp.route('/', methods=["GET"])
-# def test_connection():
-#     return 'testing connection: {}'.format(' pass')
-
 @bp.route('/update', methods=["POST"])
 def update_newscache():
     auth_token = None
@@ -23,14 +19,15 @@ def update_newscache():
     cur_user = None
     news_retreiver = NewsRetreiver(db_conn)
     user_status = determine_user_status(user_name, user_id, auth_token, db_conn)
-    resp = {'user_id':user_id, 'complete': False, 'total_page': 0, 'message':""}
+    resp = {'user_id':user_id, 'complete': False, 'total_news': 0, 'message':""}
     if user_status == 'auth_member':
         cur_user = Member(db_conn, user_id, user_name, auth_token)
-        page_cache, total_page = cur_user.create_news_cache()
+        ranked_news = cur_user.create_news_cache()
+        cur_user.update_news_cache(ranked_news)
         # news = news_retreiver.construct_news_page(page_cache)
-        if page_cache:
+        if ranked_news:
             resp['complete'] = True
-            resp['total_page'] = total_page
+            resp['total_news'] = len(ranked_news)
     else:
         resp['message'] = "Please loggin or register"
     return json.dumps(resp)

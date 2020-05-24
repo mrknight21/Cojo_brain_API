@@ -1,4 +1,9 @@
-""" Copyright 2017, Dimitrios Effrosynidis, All rights reserved. """
+"""
+Copyright 2017, Dimitrios Effrosynidis, All rights reserved.
+Rerence: https://www.kaggle.com/deffro/text-pre-processing-techniques
+Modified by Bryan Chen 2019.
+"""
+
 
 import re
 from nltk.corpus import wordnet
@@ -129,29 +134,6 @@ def countAllCaps(text):
     """ Input: a text, Output: how many words are all caps """
     return len(re.findall("[A-Z0-9]{3,}", text))
 
-
-# """ Creates a dictionary with slangs and their equivalents and replaces them """
-# with open('slang.txt') as file:
-#     slang_map = dict(map(str.strip, line.partition('\t')[::2])
-#                      for line in file if line.strip())
-#
-# slang_words = sorted(slang_map, key=len, reverse=True)  # longest first for regex
-# regex = re.compile(r"\b({})\b".format("|".join(map(re.escape, slang_words))))
-# replaceSlang = partial(regex.sub, lambda m: slang_map[m.group(1)])
-#
-#
-# def countSlang(text):
-#     """ Input: a text, Output: how many slang words and a list of found slangs """
-#     slangCounter = 0
-#     slangsFound = []
-#     tokens = nltk.word_tokenize(text)
-#     for word in tokens:
-#         if word in slang_words:
-#             slangsFound.append(word)
-#             slangCounter += 1
-#     return slangCounter, slangsFound
-
-
 """ Replaces contractions from a string to their equivalents """
 contraction_patterns = [(r'won\'t', 'will not'), (r'can\'t', 'cannot'), (r'i\'m', 'i am'), (r'ain\'t', 'is not'),
                         (r'(\w+)\'ll', '\g<1> will'), (r'(\w+)n\'t', '\g<1> not'),
@@ -271,4 +253,4 @@ def test():
     print(text)
 
 if __name__ == "__main__":
-    test()
+    print(test())

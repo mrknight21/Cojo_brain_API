@@ -123,7 +123,7 @@ class Firebase_conn(object):
     def find_one(self, doc_id, collection=None):
         if not collection:
             collection = self.base_collection
-        return self.cli.collection(collection).doc(doc_id).get()
+        return self.cli.collection(collection).document(doc_id).get()
 
     def find_many(self, collection=None, query= None, order_by = None, limit = None):
         if not collection:
