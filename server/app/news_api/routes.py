@@ -9,6 +9,11 @@ from news_processes.newsretreiver import NewsRetreiver
 from app.news_api import bp, frb_bd as db_conn
 
 
+@bp.route('/ping', methods=["POST", "GET"])
+def ping():
+    return "Echo: ping!"
+
+
 @bp.route('/update', methods=["POST"])
 def update_newscache():
     auth_token = None
