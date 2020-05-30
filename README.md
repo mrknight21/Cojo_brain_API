@@ -36,7 +36,7 @@ STATUS 200:
 "total_news": 40,
 "message": ""
 
-If "return_cache" was true in cache:
+If "return_cache" was true in request:
 "ranked_news": [
     news_article_json(refer to Data Model news_article),
     ...,
