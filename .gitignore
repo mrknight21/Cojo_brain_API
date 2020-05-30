@@ -1,7 +1,7 @@
-models/*
-trainer/data/*
+server/models/*
+server/trainer/data/*
 .idea/*
 .flaskenv
 cojo.env
-credentials/*
-logs/*
+server/credentials/*
+server/logs/*
