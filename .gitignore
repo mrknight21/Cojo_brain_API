@@ -3,3 +3,5 @@ trainer/data/*
 .idea/*
 .flaskenv
 cojo.env
+credentials/*
+logs/*
