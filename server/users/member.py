@@ -66,9 +66,9 @@ class Member(User):
         return ranked_news
 
     def update_news_cache(self, ranked_news):
-        cache = {'created': datetime.utcnow(), 'ranked_pages': {}, 'is_deleted': False}
+        cache = {'created': datetime.utcnow(), 'ranked_news': {}, 'is_deleted': False}
         if self.firestore_obj and ranked_news:
-            cache['news'] = ranked_news
+            cache['ranked_news'] = ranked_news
             self.firestore_obj['news_caches'] = cache
             self.db_conn.insert(data = self.firestore_obj, collection = 'users', doc_id = self.user_id)
 
