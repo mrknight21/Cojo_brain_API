@@ -5,3 +5,5 @@ server/trainer/data/*
 cojo.env
 server/credentials/*
 server/logs/*
+server/venv/*
+cojo_server.conf
