@@ -11,6 +11,13 @@ from app.news_api import bp, frb_bd as db_conn
 
 @bp.route('/ping', methods=["POST", "GET"])
 def ping():
+    trial = request.form.get('trial_bool', None)
+    try:
+        print(trial)
+        print(bool(trial))
+        print(eval(trial))
+    except Exception as e:
+        print(e)
     return "Echo: ping!"
 
 
