@@ -58,11 +58,18 @@ class Member(User):
 
     # def retreive_news_ids_from_cache(self, page_id):
 
-    def create_news_cache(self):
+    def create_news_cache(self, reset = True):
         # self.auth_token = self.generate_new_auth_token()
+        cur_news = []
+        number_of_news_required =40
+        if not reset:
+            cur_news = self.firestore_obj['news_caches']['ranked_news']
+            if cur_news:
+                number_of_news_required += len(cur_news)
         query = self.prepare_news_query()
-        all_news = self.db_conn.find_many('news_articles', query, limit=40)
-        ranked_news = self.simple_rank(all_news, insert_article_content=True)
+        all_news = self.db_conn.find_many('news_articles', query, limit=number_of_news_required)
+        ranked_news = self.simple_rank(all_news, insert_article_content=True, cur_news = cur_news, quota = number_of_news_required)
+        ranked_news = cur_news + ranked_news
         return ranked_news
 
     def update_news_cache(self, ranked_news):
@@ -79,18 +86,23 @@ class Member(User):
         queries.append(Firestore_query('publishedAt', '>', start))
         return queries
 
-    def simple_rank(self, news, news_per_page = 20, insert_article_content = False, variation=5):
+    def simple_rank(self, news, insert_article_content = False, cur_news = [], variation=5, quota = 40):
+        cur_rank = 0
+        if cur_news:
+            cur_rank =  max(cur_news, key = lambda x: x['rank'])['rank']
+            cur_news_id = map(lambda x: x['news_id'], cur_news)
         ranked_news = []
         news = [(doc.id, doc.to_dict()) for doc in news]
         news = sorted(news, key = lambda x: x[1]['publishedAt'])
         if variation >0:
             news = introduce_variation(news, variation = variation)
-        rank = 0
         for n in news:
-            rank += 1
+            cur_rank += 1
+            if cur_rank >= quota: break
             n_id = n[0]
             content = n[1]
-            single_news = {'news_id': n_id, 'rank': rank}
+            if n_id in cur_news_id: continue
+            single_news = {'news_id': n_id, 'rank': cur_rank}
             if insert_article_content:
                 single_news['content'] = content
             ranked_news.append(single_news)
