@@ -88,17 +88,18 @@ class Member(User):
 
     def simple_rank(self, news, insert_article_content = False, cur_news = [], variation=5, quota = 40):
         cur_rank = 0
+        cur_news_id = []
+        ranked_news = []
         if cur_news:
             cur_rank =  max(cur_news, key = lambda x: x['rank'])['rank']
             cur_news_id = map(lambda x: x['news_id'], cur_news)
-        ranked_news = []
         news = [(doc.id, doc.to_dict()) for doc in news]
         news = sorted(news, key = lambda x: x[1]['publishedAt'])
         if variation >0:
             news = introduce_variation(news, variation = variation)
         for n in news:
             cur_rank += 1
-            if cur_rank >= quota: break
+            if cur_rank > quota: break
             n_id = n[0]
             content = n[1]
             if n_id in cur_news_id: continue

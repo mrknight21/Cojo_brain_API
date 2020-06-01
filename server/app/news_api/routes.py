@@ -42,4 +42,4 @@ def update_newscache():
                 resp['ranked_news'] = ranked_news
     else:
         resp['message'] = "Please loggin or register"
-    return json.dumps(resp, default=general.json_serial())
+    return json.dumps(resp, default=general.json_serial)
