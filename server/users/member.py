@@ -9,6 +9,7 @@ from users.user_utility import *
 class Member(User):
     # Unit is hours
     EXPIRED_DURATION = 2
+    NEWS_BATCH_SIZE = 40
 
     def __init__(self, db_conn, user_id, user_name=None, auth_token=None, time = None, location = None, page_id = 1):
         self.db_conn = db_conn
@@ -61,15 +62,13 @@ class Member(User):
     def create_news_cache(self, reset = True):
         # self.auth_token = self.generate_new_auth_token()
         cur_news = []
-        number_of_news_required =40
-        if not reset:
-            cur_news = self.firestore_obj['news_caches']['ranked_news']
-            if cur_news:
-                number_of_news_required += len(cur_news)
+        cur_news = self.firestore_obj['news_caches']['ranked_news']
+        number_of_news_required = self.NEWS_BATCH_SIZE + len(cur_news)
         query = self.prepare_news_query()
         all_news = self.db_conn.find_many('news_articles', query, limit=number_of_news_required)
-        ranked_news = self.simple_rank(all_news, insert_article_content=True, cur_news = cur_news, quota = number_of_news_required)
-        ranked_news = cur_news + ranked_news
+        ranked_news = self.simple_rank(all_news, insert_article_content=True, cur_news = cur_news, quota = number_of_news_required, reset = reset)
+        if not reset:
+            ranked_news = cur_news + ranked_news
         return ranked_news
 
     def update_news_cache(self, ranked_news):
@@ -86,23 +85,25 @@ class Member(User):
         queries.append(Firestore_query('publishedAt', '>', start))
         return queries
 
-    def simple_rank(self, news, insert_article_content = False, cur_news = [], variation=5, quota = 40):
+    def simple_rank(self, news, insert_article_content = False, cur_news = None, variation=5, quota = 40, reset=True):
         cur_rank = 0
         cur_news_id = []
         ranked_news = []
-        if cur_news:
-            cur_rank =  max(cur_news, key = lambda x: x['rank'])['rank']
-            cur_news_id = map(lambda x: x['news_id'], cur_news)
+        if not reset:
+            cur_rank = max(cur_news, key = lambda x: x['rank'])['rank']
+        else:
+            quota = self.NEWS_BATCH_SIZE
+        cur_news_id = list(map(lambda x: x['news_id'], cur_news))
         news = [(doc.id, doc.to_dict()) for doc in news]
         news = sorted(news, key = lambda x: x[1]['publishedAt'])
         if variation >0:
             news = introduce_variation(news, variation = variation)
         for n in news:
-            cur_rank += 1
-            if cur_rank > quota: break
             n_id = n[0]
             content = n[1]
             if n_id in cur_news_id: continue
+            cur_rank += 1
+            if cur_rank > quota: break
             single_news = {'news_id': n_id, 'rank': cur_rank}
             if insert_article_content:
                 single_news['content'] = content
