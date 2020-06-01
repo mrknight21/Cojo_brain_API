@@ -72,11 +72,29 @@ class Member(User):
         return ranked_news
 
     def update_news_cache(self, ranked_news):
-        cache = {'created': datetime.utcnow(), 'ranked_news': {}, 'is_deleted': False}
+        cache = {'created': datetime.utcnow(), 'ranked_news': {}, 'is_deleted': False, 'ranked_news_ref':{}}
         if self.firestore_obj and ranked_news:
             cache['ranked_news'] = ranked_news
+            cache['ranked_news_ref'] = self.generate_news_ref(ranked_news)
+            cache['ranked_news_id_only'] = self.generate_news_id_only(ranked_news)
             self.firestore_obj['news_caches'] = cache
             self.db_conn.insert(data = self.firestore_obj, collection = 'users', doc_id = self.user_id)
+            del cache['ranked_news_ref']
+            del cache['ranked_news_id_only']
+
+    def generate_news_ref(self, ranked_news):
+        refs = []
+        for news in ranked_news:
+            n_id = news['news_id']
+            ref = self.db_conn.cli.collection('news_article').document(n_id)
+            refs.append({'news_id': news['news_id'], 'rank': news['rank'], 'reference':ref})
+        return refs
+
+    def generate_news_id_only(self, ranked_news):
+        news_id_only = []
+        for news in ranked_news:
+            news_id_only.append({'news_id': news['news_id'], 'rank': news['rank']})
+        return news_id_only
 
     def prepare_news_query(self, days = 3):
         queries = []
