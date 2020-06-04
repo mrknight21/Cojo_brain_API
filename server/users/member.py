@@ -65,7 +65,8 @@ class Member(User):
         cur_news = self.firestore_obj['news_caches']['ranked_news']
         number_of_news_required = self.NEWS_BATCH_SIZE + len(cur_news)
         query = self.prepare_news_query()
-        all_news = self.db_conn.find_many('news_articles', query, limit=number_of_news_required)
+        order = Firestore_order(field='publishedAt')
+        all_news = self.db_conn.find_many('news_articles', query, order_by = order, limit=number_of_news_required)
         ranked_news = self.simple_rank(all_news, insert_article_content=True, cur_news = cur_news, quota = number_of_news_required, reset = reset)
         if not reset:
             ranked_news = cur_news + ranked_news
