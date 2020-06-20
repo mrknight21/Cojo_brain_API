@@ -7,3 +7,4 @@ server/credentials/*
 server/logs/*
 server/venv/*
 cojo_server.conf
+models/*
