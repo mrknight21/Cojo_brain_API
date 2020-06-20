@@ -9,10 +9,77 @@ https://medium.com/@fadingcicadaz/cojo-the-concept-of-digital-diet-and-the-smart
 
 ## Data Model
 
-```
-## To be updated...
+** Due to the fact that firestore is currently the primary database, the primary data structure whill based on Firestores's primary data strcutures
+
+### 1. Article object (Path: news_articles)
+
+Description: object that store the information for a news article.
+
+** The 'label' is to be used for fornt end display.
 
 ```
+{
+  '_id': 'xxxxxxxxxxxxxx' (12 cahracters, String) (Required)
+  'url': 'https://www.xxxx.com' (String) (Required),
+  'downloadedAt': (Timestamp)(2020, 4, 12, 1, 27, 14, 210148, tzinfo=<UTC>)(Required),
+  'country': 'us' (String) (Required),
+  'source_domain': 'www.inquirer.com',
+  'urlToImage': 'https://www.xxxx.com' (String) (Optional),
+  'bag': {},
+  'main_category': 'business' (String) (Required),
+  'tag': {'reading_time': 6 (Int),
+  'words_count': 29 (Int),
+  'polarity': 0.5 (Int),
+  'subjectivity': 0.5 (Int)},
+  'author': 'Jacob Bogage' (String) (Optional),
+  'language': 'en' (String) (Required),
+  'description': 'xxxxxxxxxxxxxx' (String) (Required),
+  'source': {'id': None, 'name': 'Inquirer.com'} (To be updated),
+  'categories': [] (Arrat:String) (Optional),
+  'publishedAt': (Timestamp)(2020, 4, 12, 1, 27, 14, 210148, tzinfo=<UTC>)(Required),
+  'title': 'xxxxxxxxxxxxxx' (String) (Required)
+ }
+
+```
+
+### 2. Sources object (Path: source_domains/..domain['article_sources'])
+
+Description: object that store the link information that are essential for scraping and subscription, nesting inside domain object.
+
+```
+{
+  '_id': 'xxxxxxxxxxxxxx' (16 cahracters, String) (Required) **the _id is usually source domain + 4 digits
+  "url": 'https://www.xxxx.com' (String) (Required),
+  "crawler": "RssCrawler" (String) (Optional) Default:"RssCrawler",
+  "meta_data": {
+  "main_category": "sport", (String) (Required)
+  "headline": True (Boolean) (Optional) Default: false,
+  "categories":["government"] (Array:String) (Optional) Default: []
+  },
+  "label":"Sport" (String) (Required)
+},
+```
+
+
+### 3. Domain object (Path: source_domains)
+
+Description: object that store the domain information that are essential for scraping and subscription.
+
+```
+{
+  "domain_name" : "xxxxxxxxxxxx", (12 cahracters, String) (Required)
+  "description" : "xxxxxxxxxxxx", (String) (Optional)
+  "domain_url" : 'https://www.xxxx.com' (String)(Required),
+  "icon_image_link" : 'https://www.xxxx.com' (String) (Optional),
+  "language" : "en" (String)(Required),
+  "country" : "nz" (String)(Required),
+  "tags" : {},
+  "media_type":"newspaper"  (String) (Optional),
+  "interaction": {}, (To be updated)
+  "analysis":{}, (To be updated)
+  "article_sources":[source_obj] (Array: Source)
+```
+
 
 ## API Calls
 
