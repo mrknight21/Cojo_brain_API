@@ -95,7 +95,7 @@ class Member(User):
 
     def get_read_articles_ids(self):
         read_article_ids = []
-        if not self.firestore_obj or not self.firestore_obj['history']:
+        if not self.firestore_obj or not self.firestore_obj.get('history', None):
             return read_article_ids
         for _id, record in self.firestore_obj['history'].items():
             if record.get('read', False) and record.get('news_id', None):
