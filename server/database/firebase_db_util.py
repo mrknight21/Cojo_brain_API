@@ -125,15 +125,18 @@ class Firebase_conn(object):
             collection = self.base_collection
         return self.cli.collection(collection).document(doc_id).get()
 
-    def find_many(self, collection=None, query= None, order_by = None, limit = None):
+    def find_many(self, collection=None, query= None, orders_by = [], start_after = None, limit = None):
         if not collection:
             collection = self.base_collection
         ref = self.cli.collection(collection)
         if query:
             for q in query:
                 ref = q.join_query(ref)
-        if order_by:
-            ref = order_by.join_query(ref)
+        if orders_by:
+            for order_by in orders_by:
+                ref = order_by.join_query(ref)
+        if start_after:
+            ref = ref.start_after(start_after)
         if limit:
             ref = ref.limit(limit)
         results = ref.stream()

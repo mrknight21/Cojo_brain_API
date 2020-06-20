@@ -10,6 +10,7 @@ class Member(User):
     # Unit is hours
     EXPIRED_DURATION = 2
     NEWS_BATCH_SIZE = 40
+    MAXIMUM_DBCALL = 3
 
     def __init__(self, db_conn, user_id, user_name=None, auth_token=None, time = None, location = None, page_id = 1):
         self.db_conn = db_conn
@@ -62,15 +63,45 @@ class Member(User):
     def create_news_cache(self, reset = True):
         # self.auth_token = self.generate_new_auth_token()
         cur_news = []
+        update_news = []
+        reach_bacth_number = False
+        db_calls = 0
         cur_news = self.firestore_obj['news_caches']['ranked_news']
+        cur_news_id = list(map(lambda x: x['news_id'], cur_news))
+        read_articles_ids = self.get_read_articles_ids()
+        unwanted_ids = cur_news_id + read_articles_ids
+
         number_of_news_required = self.NEWS_BATCH_SIZE + len(cur_news)
         query = self.prepare_news_query()
-        order = Firestore_order(field='publishedAt')
-        all_news = self.db_conn.find_many('news_articles', query, order_by = order, limit=number_of_news_required)
-        ranked_news = self.simple_rank(all_news, insert_article_content=True, cur_news = cur_news, quota = number_of_news_required, reset = reset)
-        if not reset:
+        pub_order = Firestore_order(field='publishedAt')
+        id_order = Firestore_order(field='_id')
+        retreived_news = self.db_conn.find_many('news_articles', query, orders_by = [pub_order, id_order], limit=number_of_news_required)
+        update_news += [(doc.id, doc.to_dict())for doc in retreived_news if doc.id not in unwanted_ids]
+        unwanted_ids += [news[0] for news in update_news]
+        while(len(update_news) < self.NEWS_BATCH_SIZE and db_calls <= self.MAXIMUM_DBCALL):
+            last_news = update_news[-1][1]
+            start_after_condition = {'publishedAt':last_news['publishedAt'], '_id': last_news['_id']}
+            retreived_news = self.db_conn.find_many('news_articles', query, orders_by=[pub_order, id_order],
+                                                    limit=self.NEWS_BATCH_SIZE, start_after=start_after_condition)
+            update_news += [(doc.id, doc.to_dict()) for doc in retreived_news if doc.id not in unwanted_ids]
+            db_calls += 1
+        if reset:
+            ranked_news = self.simple_rank(update_news, insert_article_content=True, quota = self.NEWS_BATCH_SIZE)
+        else:
+            cur_rank = max(map(lambda x: x['rank'], cur_news))
+            ranked_news = self.simple_rank(update_news, insert_article_content=True, quota = self.NEWS_BATCH_SIZE, cur_rank=cur_rank)
             ranked_news = cur_news + ranked_news
         return ranked_news
+
+    def get_read_articles_ids(self):
+        read_article_ids = []
+        if not self.firestore_obj or not self.firestore_obj['history']:
+            return read_article_ids
+        for _id, record in self.firestore_obj['history'].items():
+            if record.get('read', False) and record.get('news_id', None):
+                read_article_ids.append(record['news_id'])
+        return read_article_ids
+
 
     def update_news_cache(self, ranked_news):
         cache = {'created': datetime.utcnow(), 'ranked_news': {}, 'is_deleted': False, 'ranked_news_ref':{}}
@@ -104,23 +135,15 @@ class Member(User):
         queries.append(Firestore_query('publishedAt', '>', start))
         return queries
 
-    def simple_rank(self, news, insert_article_content = False, cur_news = None, variation=5, quota = 40, reset=True):
-        cur_rank = 0
-        cur_news_id = []
+    def simple_rank(self, news, insert_article_content = False, variation=5, quota = 40, cur_rank = 0):
+        quota += cur_rank
         ranked_news = []
-        if not reset:
-            cur_rank = max(cur_news, key = lambda x: x['rank'])['rank']
-        else:
-            quota = self.NEWS_BATCH_SIZE
-        cur_news_id = list(map(lambda x: x['news_id'], cur_news))
-        news = [(doc.id, doc.to_dict()) for doc in news]
         news = sorted(news, key = lambda x: x[1]['publishedAt'])
         if variation >0:
             news = introduce_variation(news, variation = variation)
         for n in news:
             n_id = n[0]
             content = n[1]
-            if n_id in cur_news_id: continue
             cur_rank += 1
             if cur_rank > quota: break
             single_news = {'news_id': n_id, 'rank': cur_rank}
